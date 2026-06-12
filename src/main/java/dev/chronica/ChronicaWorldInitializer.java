@@ -26,7 +26,7 @@ public final class ChronicaWorldInitializer {
         for (int i = 0; i < count; i++) {
             BlockPos capital = findCapitalCandidate(random, capitals, separation);
             capitals.add(capital);
-            Civilization civ = createCivilization(level, names, random, capital, i);
+            Civilization civ = createCivilization(level, data, names, random, capital, i);
             data.civilizations.put(civ.id, civ);
             for (long chunk : civ.territory) data.territoryMap.claim(civ.id, chunk);
             data.addHistory(new HistoryEvent.CivFounded(UUID.randomUUID(), 0L, civ.id, civ.capital, names.generateNPCName(civ.id, NPCRole.ELDER, i)));
@@ -38,7 +38,7 @@ public final class ChronicaWorldInitializer {
         data.setDirty();
     }
 
-    private static Civilization createCivilization(ServerLevel level, NameGenerator names, Random random, BlockPos capital, int index) {
+    private static Civilization createCivilization(ServerLevel level, ChronicaWorldData data, NameGenerator names, Random random, BlockPos capital, int index) {
         Civilization civ = new Civilization();
         civ.id = CivId.random();
         civ.name = names.generateCivName(index * 31L + random.nextLong());
@@ -76,17 +76,17 @@ public final class ChronicaWorldInitializer {
         settlement.tier = civ.techTier;
         civ.settlements.add(settlement);
 
-        createNamedNpc(civ, settlement, names, NPCRole.ELDER, index * 41L);
-        createNamedNpc(civ, settlement, names, NPCRole.MERCHANT, index * 43L);
+        createNamedNpc(data, civ, settlement, names, NPCRole.ELDER, index * 41L);
+        createNamedNpc(data, civ, settlement, names, NPCRole.MERCHANT, index * 43L);
         if (civ.primaryTrait == CultureTrait.MILITARIST || civ.primaryTrait == CultureTrait.AGGRESSIVE) {
-            createNamedNpc(civ, settlement, names, NPCRole.GENERAL, index * 47L);
+            createNamedNpc(data, civ, settlement, names, NPCRole.GENERAL, index * 47L);
         } else {
-            createNamedNpc(civ, settlement, names, NPCRole.DIPLOMAT, index * 53L);
+            createNamedNpc(data, civ, settlement, names, NPCRole.DIPLOMAT, index * 53L);
         }
         return civ;
     }
 
-    private static void createNamedNpc(Civilization civ, Settlement settlement, NameGenerator names, NPCRole role, long seed) {
+    private static void createNamedNpc(ChronicaWorldData data, Civilization civ, Settlement settlement, NameGenerator names, NPCRole role, long seed) {
         UUID id = UUID.randomUUID();
         civ.namedNPCs.add(id);
         ChronicaNPCData npc = new ChronicaNPCData();
@@ -96,6 +96,7 @@ public final class ChronicaWorldInitializer {
         npc.role = role;
         npc.name = names.generateNPCName(civ.id, role, seed);
         npc.lastKnownPos = settlement.center;
+        data.namedNpcs.put(id, npc);
     }
 
     private static int productionFor(CultureTrait trait, ResourceType resource, Random random) {
