@@ -110,33 +110,25 @@ final class NbtUtil {
 
     static CompoundTag writeResourceMap(Map<ResourceType, Integer> values) {
         CompoundTag tag = new CompoundTag();
-        for (ResourceType type : ResourceType.values()) {
-            tag.putInt(type.name(), values.getOrDefault(type, 0));
-        }
+        for (ResourceType type : ResourceType.values()) tag.putInt(type.name(), values.getOrDefault(type, 0));
         return tag;
     }
 
     static Map<ResourceType, Integer> readResourceMap(CompoundTag tag) {
         Map<ResourceType, Integer> values = new EnumMap<>(ResourceType.class);
-        for (ResourceType type : ResourceType.values()) {
-            values.put(type, tag.getInt(type.name()));
-        }
+        for (ResourceType type : ResourceType.values()) values.put(type, tag.getInt(type.name()));
         return values;
     }
 
     static CompoundTag writeCivRepMap(Map<CivId, Integer> values) {
         CompoundTag tag = new CompoundTag();
-        for (Map.Entry<CivId, Integer> entry : values.entrySet()) {
-            tag.putInt(entry.getKey().value().toString(), entry.getValue());
-        }
+        for (Map.Entry<CivId, Integer> entry : values.entrySet()) tag.putInt(entry.getKey().value().toString(), entry.getValue());
         return tag;
     }
 
     static Map<CivId, Integer> readCivRepMap(CompoundTag tag) {
         Map<CivId, Integer> values = new HashMap<>();
-        for (String key : tag.getAllKeys()) {
-            values.put(new CivId(UUID.fromString(key)), tag.getInt(key));
-        }
+        for (String key : tag.getAllKeys()) values.put(new CivId(UUID.fromString(key)), tag.getInt(key));
         return values;
     }
 
@@ -503,15 +495,15 @@ sealed interface HistoryEvent permits HistoryEvent.CivFounded, HistoryEvent.CivC
 
     default String generateLoreText(NameGenerator nameGen) {
         return switch (this) {
-            case CivFounded e -> "In the first records, " + e.founderName + " founded a people at " + e.location.toShortString() + ".";
-            case CivCollapsed e -> "The banners of " + e.civId.value() + " fell silent after " + e.reason + ".";
-            case WarDeclared e -> "War was declared: " + e.aggressor.value() + " marched against " + e.defender.value() + " because " + e.causeSummary + ".";
-            case PeaceTreaty e -> "Peace returned between " + e.first.value() + " and " + e.second.value() + ": " + e.terms + ".";
-            case TradeRouteEstablished e -> "A trade road opened between " + e.source.value() + " and " + e.destination.value() + ".";
-            case SettlementRazed e -> "The settlement at " + e.location.toShortString() + " was razed. " + e.summary;
-            case TechAdvanced e -> "The artisans of " + e.civId.value() + " entered the age of " + e.newTier.name().toLowerCase() + ".";
-            case PlayerIntervention e -> "A traveler changed the balance of history: " + e.summary;
-            case NaturalDisaster e -> "A disaster struck near " + e.location.toShortString() + ": " + e.summary;
+            case CivFounded e -> "In the first records, " + e.founderName() + " founded a people at " + e.location().toShortString() + ".";
+            case CivCollapsed e -> "The banners of " + e.civId().value() + " fell silent after " + e.reason() + ".";
+            case WarDeclared e -> "War was declared: " + e.aggressor().value() + " marched against " + e.defender().value() + " because " + e.causeSummary() + ".";
+            case PeaceTreaty e -> "Peace returned between " + e.first().value() + " and " + e.second().value() + ": " + e.terms() + ".";
+            case TradeRouteEstablished e -> "A trade road opened between " + e.source().value() + " and " + e.destination().value() + ".";
+            case SettlementRazed e -> "The settlement at " + e.location().toShortString() + " was razed. " + e.summary();
+            case TechAdvanced e -> "The artisans of " + e.civId().value() + " entered the age of " + e.newTier().name().toLowerCase() + ".";
+            case PlayerIntervention e -> "A traveler changed the balance of history: " + e.summary();
+            case NaturalDisaster e -> "A disaster struck near " + e.location().toShortString() + ": " + e.summary();
         };
     }
 
@@ -520,15 +512,15 @@ sealed interface HistoryEvent permits HistoryEvent.CivFounded, HistoryEvent.CivC
         tag.putUUID("id", id());
         tag.putLong("worldTime", worldTime());
         switch (this) {
-            case CivFounded e -> { tag.putString("type", "civ_founded"); tag.putUUID("civId", e.civId.value()); tag.put("location", NbtUtil.writePos(e.location)); tag.putString("founderName", e.founderName); }
-            case CivCollapsed e -> { tag.putString("type", "civ_collapsed"); tag.putUUID("civId", e.civId.value()); tag.putString("reason", e.reason); }
-            case WarDeclared e -> { tag.putString("type", "war_declared"); tag.putUUID("aggressor", e.aggressor.value()); tag.putUUID("defender", e.defender.value()); tag.putString("causeSummary", e.causeSummary); }
-            case PeaceTreaty e -> { tag.putString("type", "peace_treaty"); tag.putUUID("first", e.first.value()); tag.putUUID("second", e.second.value()); tag.putString("terms", e.terms); }
-            case TradeRouteEstablished e -> { tag.putString("type", "trade_route_established"); tag.putUUID("route", e.route.value()); tag.putUUID("source", e.source.value()); tag.putUUID("destination", e.destination.value()); }
-            case SettlementRazed e -> { tag.putString("type", "settlement_razed"); tag.putUUID("civId", e.civId.value()); tag.put("location", NbtUtil.writePos(e.location)); tag.putString("summary", e.summary); }
-            case TechAdvanced e -> { tag.putString("type", "tech_advanced"); tag.putUUID("civId", e.civId.value()); tag.putString("newTier", e.newTier.name()); }
-            case PlayerIntervention e -> { tag.putString("type", "player_intervention"); tag.putUUID("playerId", e.playerId); tag.putString("summary", e.summary); }
-            case NaturalDisaster e -> { tag.putString("type", "natural_disaster"); tag.put("location", NbtUtil.writePos(e.location)); tag.putString("summary", e.summary); }
+            case CivFounded e -> { tag.putString("type", "civ_founded"); tag.putUUID("civId", e.civId().value()); tag.put("location", NbtUtil.writePos(e.location())); tag.putString("founderName", e.founderName()); }
+            case CivCollapsed e -> { tag.putString("type", "civ_collapsed"); tag.putUUID("civId", e.civId().value()); tag.putString("reason", e.reason()); }
+            case WarDeclared e -> { tag.putString("type", "war_declared"); tag.putUUID("aggressor", e.aggressor().value()); tag.putUUID("defender", e.defender().value()); tag.putString("causeSummary", e.causeSummary()); }
+            case PeaceTreaty e -> { tag.putString("type", "peace_treaty"); tag.putUUID("first", e.first().value()); tag.putUUID("second", e.second().value()); tag.putString("terms", e.terms()); }
+            case TradeRouteEstablished e -> { tag.putString("type", "trade_route_established"); tag.putUUID("route", e.route().value()); tag.putUUID("source", e.source().value()); tag.putUUID("destination", e.destination().value()); }
+            case SettlementRazed e -> { tag.putString("type", "settlement_razed"); tag.putUUID("civId", e.civId().value()); tag.put("location", NbtUtil.writePos(e.location())); tag.putString("summary", e.summary()); }
+            case TechAdvanced e -> { tag.putString("type", "tech_advanced"); tag.putUUID("civId", e.civId().value()); tag.putString("newTier", e.newTier().name()); }
+            case PlayerIntervention e -> { tag.putString("type", "player_intervention"); tag.putUUID("playerId", e.playerId()); tag.putString("summary", e.summary()); }
+            case NaturalDisaster e -> { tag.putString("type", "natural_disaster"); tag.put("location", NbtUtil.writePos(e.location())); tag.putString("summary", e.summary()); }
         }
         return tag;
     }
