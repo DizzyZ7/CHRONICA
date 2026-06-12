@@ -1,0 +1,59 @@
+# CHRONICA common configuration
+# Generated defaults for Minecraft Java 1.21.1 + NeoForge 21.1.x
+
+[world]
+  # Minimum amount of civilizations generated on first world initialization.
+  min_civilizations = 3
+  # Maximum amount of civilizations generated on first world initialization.
+  max_civilizations = 7
+  # Number of compressed pre-history years simulated before the player discovers the world.
+  simulated_history_years = 200
+  # How many abstract world-age cycles pass per real Minecraft day.
+  world_age_cycles_per_real_day = 10
+  # Minimum distance between generated capitals, in blocks.
+  civ_separation_blocks = 1500
+
+[simulation]
+  # Maximum CHRONICA CPU budget per server tick. 3 ms is 6% of a 50 ms tick.
+  tick_budget_ms = 3.0
+  civ_tick_interval = 20
+  economy_tick_interval = 100
+  diplomacy_tick_interval = 200
+  tradeRoute_tick_interval = 40
+  quest_tick_interval = 60
+
+[civilizations]
+  enable_war = true
+  enable_collapse = true
+  enable_expansion = true
+  max_territory_chunks_per_civ = 500
+  # Per civ cycle growth multiplier before food/war modifiers.
+  population_growth_rate = 0.02
+  resource_consumption_rate = 1.0
+
+[quests]
+  max_active_quests_per_player = 5
+  quest_expiry_cycles = 100
+  quest_reward_scaling = 1.0
+  enable_diplomacy_quests = true
+  # Global server-side quest cap. Prevents unstable worlds from flooding NPCs.
+  global_active_quest_cap = 50
+  # Same civ cannot generate the same quest type before this cooldown elapses.
+  per_civ_type_cooldown_ticks = 72000
+
+[structures]
+  # Settlements injected per 100 ticks.
+  lazy_inject_rate = 1
+  enable_ruins = true
+  ruin_loot_multiplier = 1.0
+
+[compatibility]
+  minecolonies_integration = true
+  create_mod_caravans = false
+  xaeros_minimap_waypoints = true
+  disable_npc_grief = true
+
+[debug]
+  log_simulation_ticks = false
+  show_territory_borders = false
+  enable_dev_commands = false
