@@ -124,10 +124,10 @@ public final class ChronicaCommands {
 
         for (int i = Math.max(0, data.historyLog.size() - 10); i < data.historyLog.size(); i++) {
             HistoryEvent event = data.historyLog.get(i);
-            String text = event.generateLoreText(NameGenerator.create(data.worldSeed));
+            String searchText = ChronicaHistoryText.searchText(data, event);
 
-            if (civName == null || text.toLowerCase(Locale.ROOT).contains(civName.toLowerCase(Locale.ROOT))) {
-                source.sendSuccess(() -> Component.translatable("chronica.command.history.entry", event.worldTime(), text), false);
+            if (civName == null || searchText.toLowerCase(Locale.ROOT).contains(civName.toLowerCase(Locale.ROOT))) {
+                source.sendSuccess(() -> ChronicaHistoryText.commandLine(data, event), false);
                 shown++;
             }
         }
@@ -270,3 +270,4 @@ public final class ChronicaCommands {
         return value.name().toLowerCase(Locale.ROOT);
     }
 }
+
