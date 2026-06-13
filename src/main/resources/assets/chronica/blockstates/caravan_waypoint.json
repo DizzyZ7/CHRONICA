@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "chronica:block/caravan_waypoint"
+    }
+  }
+}

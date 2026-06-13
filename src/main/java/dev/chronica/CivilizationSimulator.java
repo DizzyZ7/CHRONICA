@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 
 public final class CivilizationSimulator extends ChronicaSubSimulator {
-    private static final int COLLAPSE_THRESHOLD = 12;
-    private static final int RUIN_THRESHOLD = 5;
+    private static final int COLLAPSE_THRESHOLD = 8;
+    private static final int RUIN_THRESHOLD = 1;
     private static final int EXPANSION_COOLDOWN_TICKS = 12_000;
 
     public CivilizationSimulator(ServerLevel level, ChronicaWorldData data) {
@@ -58,7 +58,7 @@ public final class CivilizationSimulator extends ChronicaSubSimulator {
             int production = civ.productionPerCycle.getOrDefault(type, 0);
             int consumption = (int) Math.ceil(civ.consumptionPerCycle.getOrDefault(type, 0) * consumptionMultiplier);
             int next = civ.stockpile.getOrDefault(type, 0) + production - consumption;
-            civ.stockpile.put(type, Math.max(-200, Math.min(50_000, next)));
+            civ.stockpile.put(type, Math.max(-100, Math.min(50_000, next)));
         }
     }
 
@@ -68,12 +68,12 @@ public final class CivilizationSimulator extends ChronicaSubSimulator {
         double peaceModifier = civ.status == CivStatus.DECLINING ? 0.55 : 1.0;
         double foodModifier = food >= 0 ? 1.0 + Math.min(0.4, food / 1000.0) : Math.max(0.25, 1.0 + food / 300.0);
         double birthRate = civ.population * ChronicaCommonConfig.CONFIG.populationGrowthRate.get() * foodModifier * peaceModifier;
-        double deathRate = food < 0 ? Math.max(1.0, Math.abs(food) / 40.0) : Math.max(0.0, civ.population * 0.002);
+        double deathRate = food < 0 ? Math.max(0.25, Math.abs(food) / 90.0) : Math.max(0.0, civ.population * 0.0015);
         int delta = (int) Math.floor(birthRate - deathRate);
         if (delta == 0 && food > 50 && housingFree > 5) delta = 1;
         civ.population = Math.max(0, Math.min(civ.maxPopulation, civ.population + delta));
 
-        int foodConsumption = Math.max(1, civ.population / 18);
+        int foodConsumption = Math.max(1, civ.population / 24);
         civ.consumptionPerCycle.put(ResourceType.FOOD, foodConsumption);
     }
 
@@ -154,3 +154,4 @@ public final class CivilizationSimulator extends ChronicaSubSimulator {
         }
     }
 }
+

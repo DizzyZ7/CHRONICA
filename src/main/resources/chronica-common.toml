@@ -7,7 +7,7 @@
   # Maximum amount of civilizations generated on first world initialization.
   max_civilizations = 7
   # Number of compressed pre-history years simulated before the player discovers the world.
-  simulated_history_years = 200
+  simulated_history_years = 60
   # How many abstract world-age cycles pass per real Minecraft day.
   world_age_cycles_per_real_day = 10
   # Minimum distance between generated capitals, in blocks.
@@ -28,8 +28,8 @@
   enable_expansion = true
   max_territory_chunks_per_civ = 500
   # Per civ cycle growth multiplier before food/war modifiers.
-  population_growth_rate = 0.02
-  resource_consumption_rate = 1.0
+  population_growth_rate = 0.012
+  resource_consumption_rate = 0.75
 
 [quests]
   max_active_quests_per_player = 5
@@ -57,3 +57,4 @@
   log_simulation_ticks = false
   show_territory_borders = false
   enable_dev_commands = false
+

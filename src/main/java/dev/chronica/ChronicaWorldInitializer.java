@@ -49,8 +49,8 @@ public final class ChronicaWorldInitializer {
         civ.techTier = TechTier.STONE;
         civ.status = CivStatus.RISING;
         civ.capital = capital;
-        civ.population = 70 + random.nextInt(90);
-        civ.garrisonCount = 6 + random.nextInt(12);
+        civ.population = 120 + random.nextInt(140);
+        civ.garrisonCount = 10 + random.nextInt(16);
         civ.stockpile = new EnumMap<>(ResourceType.class);
         civ.productionPerCycle = new EnumMap<>(ResourceType.class);
         civ.consumptionPerCycle = new EnumMap<>(ResourceType.class);
@@ -147,3 +147,4 @@ public final class ChronicaWorldInitializer {
         }
     }
 }
+
