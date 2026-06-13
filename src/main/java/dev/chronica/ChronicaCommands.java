@@ -1,5 +1,7 @@
 package dev.chronica;
 
+import java.util.Locale;
+
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -36,31 +38,59 @@ public final class ChronicaCommands {
 
     private static ChronicaWorldData data(CommandSourceStack source) {
         ServerLevel level = source.getServer().getLevel(Level.OVERWORLD);
-        if (level == null) throw new IllegalStateException("Overworld is not loaded");
+        if (level == null) {
+            throw new IllegalStateException("Overworld is not loaded");
+        }
         return ChronicaWorldData.getOrCreate(level);
     }
 
     private static int info(CommandSourceStack source) {
         ChronicaWorldData data = data(source);
-        source.sendSuccess(() -> Component.literal("CHRONICA: civs=" + data.civilizations.size() + ", history=" + data.historyLog.size() + ", age=" + data.chronologicalAge), false);
+        source.sendSuccess(() -> Component.translatable(
+                "chronica.command.info",
+                data.civilizations.size(),
+                data.historyLog.size(),
+                data.chronologicalAge
+        ), false);
         return 1;
     }
 
     private static int civs(CommandSourceStack source) {
         ChronicaWorldData data = data(source);
+        if (data.civilizations.isEmpty()) {
+            source.sendFailure(Component.translatable("chronica.command.civs.empty"));
+            return 0;
+        }
+
         for (Civilization civ : data.civilizations.values()) {
-            source.sendSuccess(() -> Component.literal(civ.name + " | " + civ.status + " | " + civ.techTier + " | pop " + civ.population), false);
+            source.sendSuccess(() -> Component.translatable(
+                    "chronica.command.civs.entry",
+                    civ.name,
+                    status(civ.status),
+                    techTier(civ.techTier),
+                    civ.population
+            ), false);
         }
         return data.civilizations.size();
     }
 
     private static int civ(CommandSourceStack source, String name) {
-        Civilization civ = data(source).civilizations.values().stream().filter(c -> c.name.equalsIgnoreCase(name)).findFirst().orElse(null);
+        Civilization civ = data(source).civilizations.values().stream()
+                .filter(c -> c.name.equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+
         if (civ == null) {
-            source.sendFailure(Component.literal("Civilization not found: " + name));
+            source.sendFailure(Component.translatable("chronica.command.civ.not_found", name));
             return 0;
         }
-        source.sendSuccess(() -> Component.literal(civ.name + "\nTrait: " + civ.primaryTrait + "/" + civ.secondaryTrait + "\nStatus: " + civ.status + "\nTier: " + civ.techTier + "\nPopulation: " + civ.population + "/" + civ.maxPopulation + "\nChunks: " + civ.territory.size()), false);
+
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.header", civ.name), false);
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.traits", trait(civ.primaryTrait), trait(civ.secondaryTrait)), false);
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.status", status(civ.status)), false);
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.tier", techTier(civ.techTier)), false);
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.population", civ.population, civ.maxPopulation), false);
+        source.sendSuccess(() -> Component.translatable("chronica.command.civ.chunks", civ.territory.size()), false);
         return 1;
     }
 
@@ -68,12 +98,22 @@ public final class ChronicaCommands {
         try {
             ChronicaWorldData data = data(source);
             PlayerWorldState state = data.playerState(source.getPlayerOrException().getUUID());
+
+            if (data.civilizations.isEmpty()) {
+                source.sendFailure(Component.translatable("chronica.command.civs.empty"));
+                return 0;
+            }
+
             for (Civilization civ : data.civilizations.values()) {
-                source.sendSuccess(() -> Component.literal(civ.name + ": " + state.reputation(civ.id)), false);
+                source.sendSuccess(() -> Component.translatable(
+                        "chronica.command.reputation.entry",
+                        civ.name,
+                        state.reputation(civ.id)
+                ), false);
             }
             return state.reputation.size();
         } catch (Exception e) {
-            source.sendFailure(Component.literal("This command requires a player."));
+            source.sendFailure(Component.translatable("chronica.command.player_required"));
             return 0;
         }
     }
@@ -81,80 +121,152 @@ public final class ChronicaCommands {
     private static int history(CommandSourceStack source, String civName) {
         ChronicaWorldData data = data(source);
         int shown = 0;
+
         for (int i = Math.max(0, data.historyLog.size() - 10); i < data.historyLog.size(); i++) {
             HistoryEvent event = data.historyLog.get(i);
-            if (civName == null || event.generateLoreText(NameGenerator.create(data.worldSeed)).toLowerCase().contains(civName.toLowerCase())) {
-                source.sendSuccess(() -> Component.literal(event.worldTime() + ": " + event.generateLoreText(NameGenerator.create(data.worldSeed))), false);
+            String text = event.generateLoreText(NameGenerator.create(data.worldSeed));
+
+            if (civName == null || text.toLowerCase(Locale.ROOT).contains(civName.toLowerCase(Locale.ROOT))) {
+                source.sendSuccess(() -> Component.translatable("chronica.command.history.entry", event.worldTime(), text), false);
                 shown++;
             }
         }
+
+        if (shown == 0) {
+            source.sendFailure(Component.translatable("chronica.command.history.empty"));
+        }
+
         return shown;
     }
 
     private static int quests(CommandSourceStack source) {
         ChronicaWorldData data = data(source);
         int count = 0;
+
         for (ChronicaQuest quest : data.questPool.quests.values()) {
             if (quest.status == QuestStatus.AVAILABLE || quest.status == QuestStatus.ACTIVE) {
-                source.sendSuccess(() -> Component.literal(quest.type + " | " + quest.status + " | " + quest.summary), false);
+                source.sendSuccess(() -> Component.translatable(
+                        "chronica.command.quests.entry",
+                        questType(quest.type),
+                        questStatus(quest.status),
+                        quest.summary
+                ), false);
                 count++;
             }
         }
+
+        if (count == 0) {
+            source.sendFailure(Component.translatable("chronica.command.quests.empty"));
+        }
+
         return count;
     }
 
     private static int map(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("Territory overlay packet is planned; current claimed chunks: " + data(source).territoryMap.raw().size()), false);
+        source.sendSuccess(() -> Component.translatable(
+                "chronica.command.map",
+                data(source).territoryMap.raw().size()
+        ), false);
         return 1;
     }
 
     private static int reload(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("CHRONICA config reload hook executed. NeoForge handles config file reload events separately."), true);
+        source.sendSuccess(() -> Component.translatable("chronica.command.reload"), true);
         return 1;
     }
 
     private static int simulate(CommandSourceStack source, int years) {
         ServerLevel level = source.getServer().getLevel(Level.OVERWORLD);
         ChronicaWorldData data = data(source);
+
         CivilizationSimulator civSim = new CivilizationSimulator(level, data);
         DiplomacySimulator dipSim = new DiplomacySimulator(level, data);
         EconomySimulator ecoSim = new EconomySimulator(level, data);
+
         for (int i = 0; i < years; i++) {
-            for (Civilization civ : data.civilizations.values()) civSim.processCiv(civ);
+            for (Civilization civ : data.civilizations.values()) {
+                civSim.processCiv(civ);
+            }
             ecoSim.tick(5_000_000L);
             dipSim.tick(5_000_000L);
             data.chronologicalAge++;
         }
+
         data.setDirty();
-        source.sendSuccess(() -> Component.literal("Fast-forwarded CHRONICA by " + years + " years."), true);
+        source.sendSuccess(() -> Component.translatable("chronica.command.simulate.done", years), true);
         return years;
     }
 
     private static int debugTerritory(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("Claimed territory chunks: " + data(source).territoryMap.raw().size()), false);
+        source.sendSuccess(() -> Component.translatable(
+                "chronica.command.debug.territory",
+                data(source).territoryMap.raw().size()
+        ), false);
         return 1;
     }
 
     private static int spawnCaravan(CommandSourceStack source, String civA, String civB) {
-        source.sendSuccess(() -> Component.literal("Caravan entity spawning is reserved for v0.5. Current route simulation is abstract."), true);
+        source.sendSuccess(() -> Component.translatable("chronica.command.spawn_caravan.planned"), true);
         return 1;
     }
 
     private static int forceWar(CommandSourceStack source, String civA, String civB) {
         ChronicaWorldData data = data(source);
-        Civilization a = data.civilizations.values().stream().filter(c -> c.name.equalsIgnoreCase(civA)).findFirst().orElse(null);
-        Civilization b = data.civilizations.values().stream().filter(c -> c.name.equalsIgnoreCase(civB)).findFirst().orElse(null);
+
+        Civilization a = data.civilizations.values().stream()
+                .filter(c -> c.name.equalsIgnoreCase(civA))
+                .findFirst()
+                .orElse(null);
+
+        Civilization b = data.civilizations.values().stream()
+                .filter(c -> c.name.equalsIgnoreCase(civB))
+                .findFirst()
+                .orElse(null);
+
         if (a == null || b == null) {
-            source.sendFailure(Component.literal("Both civilizations must exist."));
+            source.sendFailure(Component.translatable("chronica.command.force_war.missing"));
             return 0;
         }
+
         DiplomaticRelation rel = data.diplomacyMatrix.getRelation(a.id, b.id);
         rel.type = RelationType.WAR;
         rel.trustScore = -100;
         rel.lastEventTime = source.getLevel().getGameTime();
-        data.addHistory(new HistoryEvent.WarDeclared(java.util.UUID.randomUUID(), source.getLevel().getGameTime(), a.id, b.id, "operator command"));
+
+        data.addHistory(new HistoryEvent.WarDeclared(
+                java.util.UUID.randomUUID(),
+                source.getLevel().getGameTime(),
+                a.id,
+                b.id,
+                "operator command"
+        ));
+
         data.setDirty();
-        source.sendSuccess(() -> Component.literal("Forced war: " + a.name + " vs " + b.name), true);
+        source.sendSuccess(() -> Component.translatable("chronica.command.force_war.done", a.name, b.name), true);
         return 1;
+    }
+
+    private static Component status(CivStatus status) {
+        return Component.translatable("chronica.status." + key(status));
+    }
+
+    private static Component techTier(TechTier tier) {
+        return Component.translatable("chronica.tech_tier." + key(tier));
+    }
+
+    private static Component trait(CultureTrait trait) {
+        return Component.translatable("chronica.trait." + key(trait));
+    }
+
+    private static Component questType(QuestType type) {
+        return Component.translatable("chronica.quest_type." + key(type));
+    }
+
+    private static Component questStatus(QuestStatus status) {
+        return Component.translatable("chronica.quest_status." + key(status));
+    }
+
+    private static String key(Enum<?> value) {
+        return value.name().toLowerCase(Locale.ROOT);
     }
 }
