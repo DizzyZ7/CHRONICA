@@ -22,9 +22,10 @@ public final class ChronicaWorldInitializer {
         int count = min + random.nextInt(Math.max(1, max - min + 1));
         int separation = ChronicaCommonConfig.CONFIG.civSeparationBlocks.get();
         List<BlockPos> capitals = new ArrayList<>();
+        BlockPos worldSpawn = level.getSharedSpawnPos();
 
         for (int i = 0; i < count; i++) {
-            BlockPos capital = findCapitalCandidate(random, capitals, separation);
+            BlockPos capital = findCapitalCandidate(random, capitals, separation, worldSpawn, i);
             capitals.add(capital);
             Civilization civ = createCivilization(level, data, names, random, capital, i);
             data.civilizations.put(civ.id, civ);
@@ -112,15 +113,23 @@ public final class ChronicaWorldInitializer {
         return base;
     }
 
-    private static BlockPos findCapitalCandidate(Random random, List<BlockPos> existing, int separation) {
+    private static BlockPos findCapitalCandidate(Random random, List<BlockPos> existing, int separation, BlockPos spawn, int index) {
+        int safeSeparation = Math.max(450, Math.min(separation, 1200));
+
         for (int attempt = 0; attempt < 300; attempt++) {
-            int x = random.nextInt(24_000) - 12_000;
-            int z = random.nextInt(24_000) - 12_000;
+            double angle = (Math.PI * 2.0 * (index + attempt * 0.17) / Math.max(4, existing.size() + 4)) + random.nextDouble() * 0.55;
+            int radius = 650 + index * 420 + random.nextInt(650) + attempt * 10;
+
+            int x = spawn.getX() + (int) Math.round(Math.cos(angle) * radius);
+            int z = spawn.getZ() + (int) Math.round(Math.sin(angle) * radius);
             BlockPos pos = new BlockPos(x, 96, z);
-            boolean ok = existing.stream().allMatch(other -> other.distSqr(pos) >= (double) separation * separation);
+
+            boolean ok = existing.stream().allMatch(other -> other.distSqr(pos) >= (double) safeSeparation * safeSeparation);
             if (ok) return pos;
         }
-        return new BlockPos(random.nextInt(30_000) - 15_000, 96, random.nextInt(30_000) - 15_000);
+
+        int fallbackRadius = 900 + index * 700;
+        return spawn.offset(fallbackRadius, 0, fallbackRadius);
     }
 
     private static void createInitialRelations(ChronicaWorldData data) {
@@ -147,4 +156,9 @@ public final class ChronicaWorldInitializer {
         }
     }
 }
+
+
+
+
+
 

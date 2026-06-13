@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
 public final class ChronicaNpcBrain extends ChronicaSubSimulator {
@@ -75,7 +74,7 @@ public final class ChronicaNpcBrain extends ChronicaSubSimulator {
                 addResource(civ, ResourceType.IRON, Math.max(1, power * 2));
                 addResource(civ, ResourceType.COAL, Math.max(1, power));
             }
-            case build_housing -> improveSettlement(civ, power);
+            case build_housing -> improveHousing(civ, power);
             case train_guards -> {
                 civ.garrisonCount = Math.min(500, civ.garrisonCount + Math.max(1, power / 2));
                 civ.militaryStrength = Math.min(5_000, civ.militaryStrength + power);
@@ -87,10 +86,7 @@ public final class ChronicaNpcBrain extends ChronicaSubSimulator {
             }
             case scout_territory -> civ.techProgress = Math.min(20_000, civ.techProgress + Math.max(1, power));
             case diplomacy -> civ.techProgress = Math.min(20_000, civ.techProgress + Math.max(1, power / 2));
-            case rest -> {
-                addResource(civ, ResourceType.FOOD, Math.max(1, power / 2));
-                npc.age = Math.max(0, npc.age);
-            }
+            case rest -> addResource(civ, ResourceType.FOOD, Math.max(1, power / 2));
         }
     }
 
@@ -114,21 +110,19 @@ public final class ChronicaNpcBrain extends ChronicaSubSimulator {
         civ.stockpile.put(type, Math.max(-100, Math.min(50_000, current + amount)));
     }
 
-    private void improveSettlement(Civilization civ, int power) {
+    private static void improveHousing(Civilization civ, int power) {
         Settlement settlement = primarySettlement(civ);
-        if (settlement == null) return;
-
-        if (settlement.structures.size() < 96) {
-            int index = settlement.structures.size();
-            BlockPos anchor = settlement.center.offset((index % 9) - 4, 0, (index / 9) - 4);
-            settlement.structures.add(anchor);
+        if (settlement != null) {
+            settlement.populationLocal = Math.min(10_000, settlement.populationLocal + Math.max(1, power));
         }
 
-        settlement.populationLocal = Math.min(10_000, settlement.populationLocal + Math.max(1, power));
         civ.maxPopulation = Math.min(100_000, civ.maxPopulation + Math.max(2, power * 2));
 
-        addResource(civ, ResourceType.WOOD, -Math.min(civ.stockpile.getOrDefault(ResourceType.WOOD, 0), Math.max(1, power)));
-        addResource(civ, ResourceType.STONE, -Math.min(civ.stockpile.getOrDefault(ResourceType.STONE, 0), Math.max(1, power / 2)));
+        int woodCost = Math.min(civ.stockpile.getOrDefault(ResourceType.WOOD, 0), Math.max(1, power));
+        int stoneCost = Math.min(civ.stockpile.getOrDefault(ResourceType.STONE, 0), Math.max(1, power / 2));
+
+        addResource(civ, ResourceType.WOOD, -woodCost);
+        addResource(civ, ResourceType.STONE, -stoneCost);
     }
 
     private static Settlement primarySettlement(Civilization civ) {
